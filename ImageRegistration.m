@@ -1,13 +1,16 @@
 % This script is used for registering tif to dicom
+% 1. Please run this script in the folder of data (eg. in 'data_new' folder)
+% 2. RegAlgorithm.m should be put in the same directory as this script
+% 3. Make sure to set patient number at line 12 before run
 
-datadir = 'E:\JHU\Data\data_test';%Dataset directory
+datadir = pwd;%Dataset directory
 
 showresults = true;
 saveresults = false;
 errornum = [];%Number of patients that potentially have errors when registering
 
-for i = 1:10 %Patient number
-    dicomdir = dir([datadir,'\P',num2str(i,'%03d'),'*\DICOM\*.dcm']);
+for i = 1:1 %Patient number
+    dicomdir = dir([datadir,'\data_new\P',num2str(i,'%03d'),'*\DICOM\*.dcm']);
     
     scale_all = [];%Scaling factor of each slice
     tx_all = [];%Translation distance of each slice
@@ -25,9 +28,9 @@ for i = 1:10 %Patient number
     for n = 1:length(dicomdir)
         slice_num = num2str(str2num(dicomdir(n).name(1:end-4)));
         
-        tifdir = dir([datadir,'\P',num2str(i,'%03d'),'*\tif\image',slice_num,'.tif']);
+        tifdir = dir([datadir,'\data_new\P',num2str(i,'%03d'),'*\tif\image',slice_num,'.tif']);
         if isempty(tifdir)
-            tifdir = dir([datadir,'\P',num2str(i,'%03d'),'*\tif\*image',slice_num,'.tif']);
+            tifdir = dir([datadir,'\data_new\P',num2str(i,'%03d'),'*\tif\*image',slice_num,'.tif']);
         end
         
         %load images

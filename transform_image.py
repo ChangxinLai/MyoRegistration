@@ -3,6 +3,8 @@ import math
 import scipy.ndimage
 import numpy as np
 import pydicom
+import os
+import glob
 
 def transform_mask(mask, matrix, output_shape):
     """
@@ -33,12 +35,46 @@ def get_pixel_spacing(dicom):
     return dcm.PixelSpacing
 
 
-mask = cv2.imread('E:\\JHU\\Data\\data_small\\P001\\1_myomask.tif')[:,:,0]
-matrix = "E:\\JHU\\Data\\data_original\\P001_JHU011\\Transmatrix\\T-1.txt"
-dcm = pydicom.dcmread("E:\\JHU\\Data\\data_original\\P001_JHU011\\DICOM\\0001.dcm")
+root_dir = os.path.abspath('.')
+mask_folder = 'data_mask'
+data_folder = 'data_new'
 
-mask_new = transform_mask(mask, matrix, dcm.pixel_array.shape)
+for p in range(1,2):
+    patient_name = 'P'+"%03d" % p
 
-cv2.namedWindow("Image")
-cv2.imshow("Image",mask_new)
-cv2.waitKey(0)
+    mask_dir = glob.glob(os.path.join(root_dir, mask_folder) + '/%s' % patient_name)[0]
+    data_dir = glob.glob(os.path.join(root_dir, data_folder) + '/%s_*' % patient_name)[0]
+
+    mask_image_paths = sorted(
+        glob.glob(mask_dir + '/*[0-9]_myomask.tif'),
+        key=lambda n: int(str.replace(str.replace(n, mask_dir + '/', ''), '_myomask.tif', ''))
+    )
+
+    mask_images = [cv2.imread(m, 0) for m in mask_image_paths]
+
+    '''
+    matrix_path = sorted(
+        glob.glob(os.path.join(data_dir, 'Transmatrix') + '/T-*[0-9].txt'),
+        key=lambda n: int(str.replace(str.replace(n, os.path.join(data_dir, 'Transmatrix') + '/T-', ''), '.txt', ''))
+    )
+
+    dcm_paths = sorted(
+        glob.glob(os.path.join(data_dir, 'DICOM') + '/*[0-9].dcm'),
+        key=lambda n: int(str.replace(str.replace(n, os.path.join(data_dir, 'DICOM') + '/', ''), '.dcm', ''))
+    )
+
+    dcm_images = [pydicom.dcmread(n) for n in dcm_paths]
+    '''
+
+    for i in range(len(mask_image_paths)):
+        image_no = int(str.replace(str.replace(mask_image_paths[i], mask_dir + '/', ''), '_myomask.tif', ''))
+        matrix = os.path.join(data_dir, 'Transmatrix') + '/T-%s.txt' % image_no
+        dcm_path = os.path.join(data_dir, 'DICOM') + '/%04d.dcm' % image_no
+        dcm = pydicom.dcmread(dcm_path)
+        mask_new = transform_mask(mask_images[i], matrix, dcm.pixel_array.shape)
+        cv2.imwrite(os.path.join(data_dir,'myomask')+'/%s_myomask_recovered.tif' % image_no, mask_new)
+
+
+
+
+
